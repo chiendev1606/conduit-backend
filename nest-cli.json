@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/main-services/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/main-services/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/main-services",
+  "projects": {
+    "main-services": {
+      "type": "application",
+      "root": "apps/main-services",
+      "entryFile": "main",
+      "sourceRoot": "apps/main-services/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/main-services/tsconfig.app.json"
+      }
+    },
+    "webhook-services": {
+      "type": "application",
+      "root": "apps/webhook-services",
+      "entryFile": "main",
+      "sourceRoot": "apps/webhook-services/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/webhook-services/tsconfig.app.json"
+      }
+    },
+    "cron-services": {
+      "type": "application",
+      "root": "apps/cron-services",
+      "entryFile": "main",
+      "sourceRoot": "apps/cron-services/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/cron-services/tsconfig.app.json"
+      }
+    },
+    "database": {
+      "type": "library",
+      "root": "libs/database",
+      "entryFile": "index",
+      "sourceRoot": "libs/database/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/database/tsconfig.lib.json"
+      }
+    },
+    "validator": {
+      "type": "library",
+      "root": "libs/validator",
+      "entryFile": "index",
+      "sourceRoot": "libs/validator/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/validator/tsconfig.lib.json"
+      }
+    }
+  }
+}
