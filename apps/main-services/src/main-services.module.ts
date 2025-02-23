@@ -6,6 +6,12 @@ import configEnv, { validate } from './config';
 import { DatabaseModule } from '@conduit/database';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
+import { JWT_SECRET } from './const';
+import { AuthGuard } from './auth/auth.guard';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { TransformInterceptor } from '@conduit/interceptors';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -19,10 +25,25 @@ import { AuthModule } from './auth/auth.module';
       DB_NAME: configEnv.DB_NAME,
       DB_URL: configEnv.DB_URL,
     }),
+    JwtModule.register({
+      global: true,
+      secret: JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+    }),
     UsersModule,
     AuthModule,
   ],
   controllers: [MainServicesController],
-  providers: [MainServicesService],
+  providers: [
+    MainServicesService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
+    },
+  ],
 })
 export class MainServicesModule {}

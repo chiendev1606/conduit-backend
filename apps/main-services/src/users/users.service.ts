@@ -17,6 +17,12 @@ export class UsersService {
     });
   }
 
+  async findUserById(id: string) {
+    return this.db.user.findUnique({
+      where: { id },
+    });
+  }
+
   async createUser(body: SignUpDto) {
     const { password, ...userData } = body;
 
@@ -28,7 +34,7 @@ export class UsersService {
 
     const hashedPassword = await hashPassword(password);
 
-    return this.db.user.create({
+    const user = await this.db.user.create({
       data: {
         email: userData.email,
         password: hashedPassword,
@@ -36,5 +42,11 @@ export class UsersService {
         lastName: userData.lastName,
       },
     });
+
+    return {
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
   }
 }

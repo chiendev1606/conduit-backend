@@ -6,7 +6,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
+    "target": "es2017",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
@@ -17,6 +17,7 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "esModuleInterop": true,
     "paths": {
       "@conduit/database": [
         "libs/database/src"
@@ -24,11 +25,23 @@
       "@conduit/database/*": [
         "libs/database/src/*"
       ],
-      "@conduit/validator": [
-        "libs/validator/src"
+      "@conduit/validators": [
+        "libs/validators/src"
       ],
-      "@conduit/validator/*": [
-        "libs/validator/src/*"
+      "@conduit/validators/*": [
+        "libs/validators/src/*"
+      ],
+      "@conduit/decorators": [
+        "libs/decorators/src"
+      ],
+      "@conduit/decorators/*": [
+        "libs/decorators/src/*"
+      ],
+      "@conduit/interceptors": [
+        "libs/interceptors/src"
+      ],
+      "@conduit/interceptors/*": [
+        "libs/interceptors/src/*"
       ]
     }
   }

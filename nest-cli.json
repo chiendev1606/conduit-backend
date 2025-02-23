@@ -46,13 +46,31 @@
         "tsConfigPath": "libs/database/tsconfig.lib.json"
       }
     },
-    "validator": {
+    "validators": {
       "type": "library",
-      "root": "libs/validator",
+      "root": "libs/validators",
       "entryFile": "index",
-      "sourceRoot": "libs/validator/src",
+      "sourceRoot": "libs/validators/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/validator/tsconfig.lib.json"
+        "tsConfigPath": "libs/validators/tsconfig.lib.json"
+      }
+    },
+    "decorators": {
+      "type": "library",
+      "root": "libs/decorators",
+      "entryFile": "index",
+      "sourceRoot": "libs/decorators/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/decorators/tsconfig.lib.json"
+      }
+    },
+    "interceptors": {
+      "type": "library",
+      "root": "libs/interceptors",
+      "entryFile": "index",
+      "sourceRoot": "libs/interceptors/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/interceptors/tsconfig.lib.json"
       }
     }
   }

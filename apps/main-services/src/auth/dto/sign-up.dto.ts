@@ -1,4 +1,4 @@
-import { CompareConfirmPassword } from '@conduit/validator/compare-confirm-password.validator';
+import { CompareConfirmPassword } from 'libs/validators/src';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class SignUpDto {
