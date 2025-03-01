@@ -4,20 +4,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ArticlesServices } from '../articles/articles.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { PaginationQuery } from '@conduit/decorators';
 
 @Injectable()
-export class CommentsService {
-  constructor(
-    private readonly db: DatabaseServices,
-    private readonly articlesService: ArticlesServices,
-  ) {}
+export class CommentsServices {
+  constructor(private readonly db: DatabaseServices) {}
 
-  async createComment(body: CreateCommentDto, userId: string) {
+  async createComment({
+    body,
+    userId,
+  }: {
+    body: CreateCommentDto;
+    userId: string;
+  }) {
     const { content, articleId } = body;
-    await this.articlesService.findArticlesByIdOrThrow(articleId);
     await this.db.comment.create({ data: { content, articleId, userId } });
     return 'Comment created successfully';
   }

@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AuthGuard } from './modules/auth/auth.guard';
 import { InteractionModule } from './modules/interaction/interaction.module';
 import { ArticlesModule } from './modules/articles/articles.module';
+import { CommentsModule } from './modules/comments/comments.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -34,6 +35,7 @@ import { ArticlesModule } from './modules/articles/articles.module';
     AuthModule,
     InteractionModule,
     ArticlesModule,
+    CommentsModule,
   ],
   controllers: [MainServicesController],
   providers: [

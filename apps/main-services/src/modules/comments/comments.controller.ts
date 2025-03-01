@@ -1,25 +1,12 @@
-import { Body, Controller, Delete, Param, Post, Put } from '@nestjs/common';
-import { CommentsService } from './comments.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { Identify } from '@conduit/decorators/identify.decorator';
 import { ApiOperationDecorator } from '@conduit/decorators/api-operation.decorator';
+import { Identify } from '@conduit/decorators/identify.decorator';
+import { Body, Controller, Delete, Param, Put } from '@nestjs/common';
+import { CommentsServices } from './comments.service';
+import { CreateCommentDto } from './dto/create-comment.dto';
 
 @Controller('comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) {}
-
-  @Post()
-  @ApiOperationDecorator({
-    summary: 'Create comment',
-    description: 'Create comment',
-    operationId: 'createComment',
-  })
-  async createComment(
-    @Body() body: CreateCommentDto,
-    @Identify('id') userId: string,
-  ) {
-    return this.commentsService.createComment(body, userId);
-  }
+  constructor(private readonly commentsService: CommentsServices) {}
 
   @Put(':id')
   @ApiOperationDecorator({

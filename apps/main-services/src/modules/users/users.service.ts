@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { SignUpDto } from '../auth/dto/sign-up.dto';
 import { hashPassword } from '../../utils/bcrypt';
-import { UpdateUserDto } from './update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { FollowUserDto } from './dto/follow-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -82,5 +83,34 @@ export class UsersService {
         profileUrl: userData.profileUrl,
       },
     });
+  }
+
+  async followUser({ userId, body }: { userId: string; body: FollowUserDto }) {
+    const { userId: followingId } = body;
+
+    await this.db.follow.create({
+      data: {
+        followerId: userId,
+        followingId,
+      },
+    });
+
+    return 'User followed successfully';
+  }
+
+  async unfollowUser({
+    userId,
+    body,
+  }: {
+    userId: string;
+    body: FollowUserDto;
+  }) {
+    const { userId: followingId } = body;
+
+    await this.db.follow.delete({
+      where: { followerId_followingId: { followerId: userId, followingId } },
+    });
+
+    return 'User unfollowed successfully';
   }
 }

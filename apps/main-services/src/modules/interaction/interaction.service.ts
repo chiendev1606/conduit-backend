@@ -1,24 +1,25 @@
 import { DatabaseServices } from '@conduit/database';
-import { Injectable } from '@nestjs/common';
-import { ArticlesServices } from '../articles/articles.service';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateEmotionDto } from './dto/create-emotion.dto';
 
 @Injectable()
 export class InteractionService {
-  constructor(
-    private readonly db: DatabaseServices,
-    private readonly articlesService: ArticlesServices,
-  ) {}
+  constructor(private readonly db: DatabaseServices) {}
 
   async createEmotion({
     body,
     userId,
+    articleId,
   }: {
     body: CreateEmotionDto;
     userId: string;
+    articleId: string;
   }) {
-    const { articleId, type } = body;
-    await this.articlesService.findArticlesByIdOrThrow(articleId);
+    const { type } = body;
 
     await this.db.emotion.upsert({
       where: { userId_articleId: { userId, articleId } },
@@ -31,12 +32,11 @@ export class InteractionService {
 
   async deleteEmotion({
     userId,
-    body,
+    articleId,
   }: {
     userId: string;
-    body: CreateEmotionDto;
+    articleId: string;
   }) {
-    const { articleId } = body;
     await this.db.emotion.delete({
       where: { userId_articleId: { userId, articleId } },
     });
@@ -44,27 +44,54 @@ export class InteractionService {
     return 'Emotion deleted successfully';
   }
 
-  async toggleFavorite({
+  async findUniqueFavorite({
     userId,
-    body,
+    articleId,
   }: {
     userId: string;
-    body: CreateEmotionDto;
+    articleId: string;
   }) {
-    const { articleId } = body;
-    await this.articlesService.findArticlesByIdOrThrow(articleId);
-    const existingFavorite = await this.db.favorite.findUnique({
+    return this.db.favorite.findUnique({
       where: { userId_articleId: { userId, articleId } },
     });
+  }
 
-    if (existingFavorite) {
-      await this.db.favorite.delete({
-        where: { userId_articleId: { userId, articleId } },
-      });
-    } else {
-      await this.db.favorite.create({ data: { userId, articleId } });
-    }
+  async createFavorite({
+    userId,
+    articleId,
+  }: {
+    userId: string;
+    articleId: string;
+  }) {
+    const existingFavorite = await this.findUniqueFavorite({
+      userId,
+      articleId,
+    });
+
+    if (existingFavorite)
+      throw new BadRequestException('Article already favorite');
+
+    await this.db.favorite.create({ data: { userId, articleId } });
 
     return 'Favorite created successfully';
+  }
+
+  async deleteFavorite({
+    userId,
+    articleId,
+  }: {
+    userId: string;
+    articleId: string;
+  }) {
+    const existingFavorite = await this.findUniqueFavorite({
+      userId,
+      articleId,
+    });
+
+    if (!existingFavorite) throw new NotFoundException('Favorite not found');
+
+    await this.db.favorite.delete({
+      where: { userId_articleId: { userId, articleId } },
+    });
   }
 }

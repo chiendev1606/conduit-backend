@@ -1,11 +1,19 @@
 import { DatabaseServices } from '@conduit/database';
-import { Injectable, NotFoundException } from '@nestjs/common';
 import type { PaginationQuery } from '@conduit/decorators';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CommentsServices } from '../comments/comments.service';
+import { CreateCommentDto } from '../comments/dto/create-comment.dto';
+import { CreateEmotionDto } from '../interaction/dto/create-emotion.dto';
+import { InteractionService } from '../interaction/interaction.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 
 @Injectable()
 export class ArticlesServices {
-  constructor(private readonly db: DatabaseServices) {}
+  constructor(
+    private readonly db: DatabaseServices,
+    private readonly commentsService: CommentsServices,
+    private readonly interactionService: InteractionService,
+  ) {}
 
   async findAll() {
     return this.db.article.findMany();
@@ -51,6 +59,29 @@ export class ArticlesServices {
     return { articles, total, page, size };
   }
 
+  async getFavoriteArticleByUserId({
+    userId,
+    pagination,
+  }: {
+    userId: string;
+    pagination: PaginationQuery;
+  }) {
+    const { page, size } = pagination;
+    const [total, articles] = await Promise.all([
+      this.db.article.count({
+        where: { favorites: { some: { userId } } },
+      }),
+      this.db.article.findMany({
+        where: { favorites: { some: { userId } } },
+        skip: (page - 1) * size,
+        take: size,
+        include: { tags: true },
+      }),
+    ]);
+
+    return { articles, total, page, size };
+  }
+
   async getArticleById(id: string) {
     return this.db.article.findUnique({
       where: { id },
@@ -61,6 +92,74 @@ export class ArticlesServices {
         comments: true,
       },
     });
+  }
+
+  async getPersonalFeed({
+    userId,
+    pagination,
+  }: {
+    userId: string;
+    pagination: PaginationQuery;
+  }) {
+    const following = await this.db.follow.findMany({
+      where: { followerId: userId },
+    });
+    const followingIds = following.map((follow) => follow.followingId);
+
+    const { page, size } = pagination;
+    const [total, articles] = await Promise.all([
+      this.db.article.count({
+        where: { createdBy: { in: followingIds } },
+      }),
+      this.db.article.findMany({
+        where: { createdBy: { in: followingIds } },
+        skip: (page - 1) * size,
+        take: size,
+        include: {
+          favorites: true,
+          emotions: true,
+          tags: true,
+          comments: true,
+        },
+      }),
+    ]);
+
+    return {
+      articles,
+      total,
+      page,
+      size,
+    };
+  }
+
+  async createEmotionForArticle({
+    userId,
+    body,
+    articleId,
+  }: {
+    userId: string;
+    body: CreateEmotionDto;
+    articleId: string;
+  }) {
+    await this.findArticlesByIdOrThrow(articleId);
+    await this.interactionService.createEmotion({
+      userId,
+      body,
+      articleId,
+    });
+
+    return 'Emotion created successfully';
+  }
+
+  async deleteEmotionForArticle({
+    userId,
+    articleId,
+  }: {
+    userId: string;
+    articleId: string;
+  }) {
+    await this.findArticlesByIdOrThrow(articleId);
+    await this.interactionService.deleteEmotion({ userId, articleId });
   }
 
   async getArticlesByUserId({
@@ -96,6 +195,22 @@ export class ArticlesServices {
     };
   }
 
+  async createCommentInArticle({
+    body,
+    userId,
+  }: {
+    body: CreateCommentDto;
+    userId: string;
+  }) {
+    const { articleId } = body;
+    await this.findArticlesByIdOrThrow(articleId);
+    await this.commentsService.createComment({
+      body,
+      userId,
+    });
+    return 'Comment created successfully';
+  }
+
   async createArticle(body: CreateArticleDto) {
     const tags = await this.db.$transaction(
       body.tags.map((tag) =>
@@ -124,6 +239,26 @@ export class ArticlesServices {
         tags: true,
       },
     });
+  }
+
+  async createFavoriteForArticle({
+    userId,
+    articleId,
+  }: {
+    userId: string;
+    articleId: string;
+  }) {
+    return this.interactionService.createFavorite({ userId, articleId });
+  }
+
+  async deleteFavoriteForArticle({
+    userId,
+    articleId,
+  }: {
+    userId: string;
+    articleId: string;
+  }) {
+    return this.interactionService.deleteFavorite({ userId, articleId });
   }
 
   async updateArticle({ id, body }: { id: string; body: CreateArticleDto }) {

@@ -1,4 +1,8 @@
+import { PaginationQuery } from '@conduit/decorators';
+import { ApiOperationDecorator } from '@conduit/decorators/api-operation.decorator';
 import { Identify } from '@conduit/decorators/identify.decorator';
+import { Pagination } from '@conduit/decorators/pagination.decorator';
+import { PaginationResponseInterceptor } from '@conduit/interceptors';
 import {
   Body,
   Controller,
@@ -9,23 +13,18 @@ import {
   Put,
   UseInterceptors,
 } from '@nestjs/common';
-import { ArticlesServices } from './articles.service';
-import { Pagination } from '@conduit/decorators/pagination.decorator';
-import { PaginationQuery } from '@conduit/decorators';
-import { ApiOperationDecorator } from '@conduit/decorators/api-operation.decorator';
-import { PaginationResponseInterceptor } from '@conduit/interceptors';
-import { CreateArticleDto } from './dto/create-article.dto';
+import { CommentsServices } from '../comments/comments.service';
+import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { CreateEmotionDto } from '../interaction/dto/create-emotion.dto';
 import { InteractionService } from '../interaction/interaction.service';
-import { CommentsService } from '../comments/comments.service';
-import { CreateCommentDto } from '../comments/dto/create-comment.dto';
-
+import { ArticlesServices } from './articles.service';
+import { CreateArticleDto } from './dto/create-article.dto';
 @Controller('articles')
 export class ArticlesController {
   constructor(
-    private readonly articlesService: ArticlesServices,
-    private readonly interactionService: InteractionService,
-    private readonly commentsService: CommentsService,
+    private readonly articleServices: ArticlesServices,
+    private readonly interactionServices: InteractionService,
+    private readonly commentsServices: CommentsServices,
   ) {}
 
   @Get()
@@ -36,7 +35,7 @@ export class ArticlesController {
     operationId: 'getArticleList',
   })
   async getArticleList(@Pagination() pagination: PaginationQuery) {
-    return this.articlesService.getArticleList({ pagination });
+    return this.articleServices.getArticleList({ pagination });
   }
 
   @Get(':id')
@@ -46,7 +45,7 @@ export class ArticlesController {
     operationId: 'getArticleById',
   })
   async getArticleById(@Param('id') id: string) {
-    return this.articlesService.getArticleById(id);
+    return this.articleServices.getArticleById(id);
   }
 
   @ApiOperationDecorator({
@@ -55,12 +54,12 @@ export class ArticlesController {
     operationId: 'getArticlesByUserId',
   })
   @UseInterceptors(PaginationResponseInterceptor)
-  @Get('feed')
+  @Get('users-feed')
   async getArticlesByUserId(
     @Pagination() pagination: PaginationQuery,
     @Identify('id') userId: string,
   ) {
-    return this.articlesService.getArticlesByUserId({ userId, pagination });
+    return this.articleServices.getPersonalFeed({ userId, pagination });
   }
 
   @Post()
@@ -70,10 +69,10 @@ export class ArticlesController {
     operationId: 'createArticle',
   })
   async createArticle(@Body() body: CreateArticleDto) {
-    return this.articlesService.createArticle(body);
+    return this.articleServices.createArticle(body);
   }
 
-  @Post('emotions')
+  @Post(':id/emotions')
   @ApiOperationDecorator({
     summary: 'Create emotion',
     description: 'Create emotion',
@@ -82,21 +81,29 @@ export class ArticlesController {
   async createEmotion(
     @Body() body: CreateEmotionDto,
     @Identify('id') userId: string,
+    @Param('id') articleId: string,
   ) {
-    return this.interactionService.createEmotion({ body, userId });
+    return this.articleServices.createEmotionForArticle({
+      userId,
+      body,
+      articleId,
+    });
   }
 
-  @Delete('emotions')
+  @Delete(':id/emotions')
   @ApiOperationDecorator({
     summary: 'Delete emotion',
     description: 'Delete emotion',
     operationId: 'deleteEmotion',
   })
   async deleteEmotion(
-    @Body() body: CreateEmotionDto,
+    @Param('id') articleId: string,
     @Identify('id') userId: string,
   ) {
-    return this.interactionService.deleteEmotion({ userId, body });
+    return this.articleServices.deleteEmotionForArticle({
+      userId,
+      articleId,
+    });
   }
 
   @Get('users')
@@ -110,7 +117,7 @@ export class ArticlesController {
     @Identify('id') userId: string,
     @Pagination() pagination: PaginationQuery,
   ) {
-    return this.articlesService.getArticlesByUserId({ userId, pagination });
+    return this.articleServices.getArticlesByUserId({ userId, pagination });
   }
 
   @Get(':id/comments')
@@ -124,7 +131,7 @@ export class ArticlesController {
     @Param('id') articleId: string,
     @Pagination() pagination: PaginationQuery,
   ) {
-    return this.commentsService.getCommentsByArticleId({
+    return this.commentsServices.getCommentsByArticleId({
       articleId,
       pagination,
     });
@@ -137,7 +144,7 @@ export class ArticlesController {
     operationId: 'updateArticle',
   })
   async updateArticle(@Body() body: CreateArticleDto, @Param('id') id: string) {
-    return this.articlesService.updateArticle({ id, body });
+    return this.articleServices.updateArticle({ id, body });
   }
 
   @Post(':id/comments')
@@ -150,19 +157,55 @@ export class ArticlesController {
     @Body() body: CreateCommentDto,
     @Identify('id') userId: string,
   ) {
-    return this.commentsService.createComment(body, userId);
+    return this.articleServices.createCommentInArticle({
+      body,
+      userId,
+    });
   }
 
   @Post(':id/favorites')
   @ApiOperationDecorator({
-    summary: 'Toggle favorite',
-    description: 'Toggle favorite',
-    operationId: 'toggleFavorite',
+    summary: 'Create favorite',
+    description: 'Create favorite',
+    operationId: 'createFavorite',
   })
-  async toggleFavorite(
-    @Body() body: CreateEmotionDto,
+  async createFavorite(
+    @Identify('id') userId: string,
+    @Param('id') articleId: string,
+  ) {
+    return this.interactionServices.createFavorite({ userId, articleId });
+  }
+
+  @Delete(':id/favorites')
+  @ApiOperationDecorator({
+    summary: 'Delete favorite',
+    description: 'Delete favorite',
+    operationId: 'deleteFavorite',
+  })
+  async deleteFavorite(
+    @Identify('id') userId: string,
+    @Param('id') articleId: string,
+  ) {
+    return this.articleServices.deleteFavoriteForArticle({
+      userId,
+      articleId,
+    });
+  }
+
+  @Get('favorites')
+  @ApiOperationDecorator({
+    summary: 'Get favorite articles',
+    description: 'Get favorite articles',
+    operationId: 'getFavoriteArticles',
+  })
+  @UseInterceptors(PaginationResponseInterceptor)
+  async getFavoriteArticles(
+    @Pagination() pagination: PaginationQuery,
     @Identify('id') userId: string,
   ) {
-    return this.interactionService.toggleFavorite({ userId, body });
+    return this.articleServices.getFavoriteArticleByUserId({
+      userId,
+      pagination,
+    });
   }
 }

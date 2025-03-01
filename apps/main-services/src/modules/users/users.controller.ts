@@ -1,8 +1,9 @@
 import { ApiOperationDecorator } from '@conduit/decorators';
 import { Identify } from '@conduit/decorators/identify.decorator';
-import { Body, Controller, Get, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { FollowUserDto } from './dto/follow-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -29,5 +30,31 @@ export class UsersController {
     @Body() body: UpdateUserDto,
   ) {
     return this.usersService.updateUser({ userId, body });
+  }
+
+  @Post('follow')
+  @ApiOperationDecorator({
+    summary: 'Follow user',
+    description: 'Follow user',
+    operationId: 'followUser',
+  })
+  async followUser(
+    @Identify('id') userId: string,
+    @Body() body: FollowUserDto,
+  ) {
+    return this.usersService.followUser({ userId, body });
+  }
+
+  @Post('unfollow')
+  @ApiOperationDecorator({
+    summary: 'Unfollow user',
+    description: 'Unfollow user',
+    operationId: 'unfollowUser',
+  })
+  async unfollowUser(
+    @Identify('id') userId: string,
+    @Body() body: FollowUserDto,
+  ) {
+    return this.usersService.unfollowUser({ userId, body });
   }
 }
