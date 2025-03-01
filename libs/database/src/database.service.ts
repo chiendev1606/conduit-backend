@@ -3,8 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import { DatabaseModuleOptions } from './database.module';
 
 @Injectable()
-export class DatabaseService extends PrismaClient implements OnModuleInit {
-  private readonly logger = new Logger(DatabaseService.name);
+export class DatabaseServices extends PrismaClient implements OnModuleInit {
+  private readonly logger = new Logger(DatabaseServices.name);
   constructor(config: DatabaseModuleOptions) {
     super({
       datasourceUrl: config.DB_URL,

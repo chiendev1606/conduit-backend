@@ -13,6 +13,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==============================
+// Auth & User Service
+// ==============================
+
 enum Role {
   USER
   ADMIN
@@ -40,7 +44,7 @@ model User {
   emotions   Emotion[]
   favorites  Favorite[]
   articles   Article[]
-
+  comments   Comment[]
   @@map("user")
 }
 
@@ -57,6 +61,10 @@ model Follow {
   @@map("follow")
 }
 
+// ==============================
+// Article Service
+// ==============================
+
 model Article {
   id        String     @id @default(uuid())
   title     String
@@ -65,17 +73,17 @@ model Article {
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
   tags      Tag[]
-  articles  Emotion[]
+  emotions  Emotion[]
   favorites Favorite[]
   createdBy String
   user      User       @relation(fields: [createdBy], references: [id])
-
+  comments  Comment[]
   @@map("article")
 }
 
 model Tag {
   id        String    @id @default(uuid())
-  name      String
+  name      String    @unique()
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   articles  Article[]
@@ -83,25 +91,47 @@ model Tag {
   @@map("tag")
 }
 
+// ==============================
+// Interaction Service
+// ==============================
+
 model Emotion {
   id        String      @id @default(uuid())
   userId    String      @map("user_id")
   articleId String      @map("article_id")
-  user      User        @relation(fields: [userId], references: [id])
-  article   Article     @relation(fields: [articleId], references: [id])
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  article   Article     @relation(fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   type      EmotionEnum
   createdAt DateTime    @default(now()) @map("created_at")
   updatedAt DateTime    @updatedAt @map("updated_at")
+
+  @@unique([userId, articleId])
+  @@map("emotion")
 }
 
 model Favorite {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   articleId String   @map("article_id")
-  user      User     @relation(fields: [userId], references: [id])
-  article   Article  @relation(fields: [articleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@unique([userId, articleId])
   @@map("favorite")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  articleId String   @map("article_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("comment")
 }

@@ -1,17 +1,17 @@
+import { DatabaseModule } from '@conduit/database';
+import { TransformInterceptor } from '@conduit/interceptors';
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
+import configEnv, { validate } from './config';
 import { MainServicesController } from './main-services.controller';
 import { MainServicesService } from './main-services.service';
-import { ConfigModule } from '@nestjs/config';
-import configEnv, { validate } from './config';
-import { DatabaseModule } from '@conduit/database';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
-import { JwtModule } from '@nestjs/jwt';
-import { JWT_SECRET } from './const';
-import { AuthGuard } from './auth/auth.guard';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { TransformInterceptor } from '@conduit/interceptors';
-
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { AuthGuard } from './modules/auth/auth.guard';
+import { InteractionModule } from './modules/interaction/interaction.module';
+import { ArticlesModule } from './modules/articles/articles.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -27,11 +27,13 @@ import { TransformInterceptor } from '@conduit/interceptors';
     }),
     JwtModule.register({
       global: true,
-      secret: JWT_SECRET,
+      secret: configEnv.JWT_SECRET_KEY,
       signOptions: { expiresIn: '1d' },
     }),
     UsersModule,
     AuthModule,
+    InteractionModule,
+    ArticlesModule,
   ],
   controllers: [MainServicesController],
   providers: [

@@ -22,6 +22,10 @@ class EnvironmentVariablesDto {
   @IsString()
   @IsNotEmpty()
   DB_NAME: string;
+
+  @IsString()
+  @IsNotEmpty()
+  JWT_SECRET_KEY: string;
 }
 
 export const validate = (config: Record<string, unknown>) => {
@@ -44,6 +48,7 @@ const configEnv = {
   DB_HOST: process.env.DB_HOST,
   DB_PORT: process.env.DB_PORT,
   DB_NAME: process.env.DB_NAME,
+  JWT_SECRET_KEY: process.env.JWT_SECRET_KEY,
   DB_URL: constructDBUrl({
     DB_USERNAME: process.env.DB_USERNAME,
     DB_PASSWORD: process.env.DB_PASSWORD,

@@ -1,5 +1,5 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
-import { DatabaseService } from './database.service';
+import { DatabaseServices } from './database.service';
 
 export interface DatabaseModuleOptions {
   DB_USERNAME: string;
@@ -22,14 +22,14 @@ export class DatabaseModule {
           useValue: config,
         },
         {
-          provide: DatabaseService,
+          provide: DatabaseServices,
           useFactory: (config: DatabaseModuleOptions) => {
-            return new DatabaseService(config);
+            return new DatabaseServices(config);
           },
           inject: ['DATABASE_CONFIG'],
         },
       ],
-      exports: ['DATABASE_CONFIG', DatabaseService],
+      exports: ['DATABASE_CONFIG', DatabaseServices],
     };
   }
 }
