@@ -4,23 +4,22 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-
-import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from 'libs/decorators/src';
-import configEnv from '../../config';
+import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
+import { UserService } from '../users/user.service';
+import config from '../../config';
+import { IS_PUBLIC_KEY } from '@conduit/decorators';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
+    private readonly userService: UserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -28,17 +27,24 @@ export class AuthGuard implements CanActivate {
     if (isPublic) {
       return true;
     }
+
+    const request = context.switchToHttp().getRequest();
+    const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Token is required');
     }
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: configEnv.JWT_SECRET_KEY,
+        secret: config.jwt.secret,
       });
-      request['userIdentify'] = payload;
+
+      const foundUser = await this.userService.findById(payload.sub);
+
+      request['user'] = foundUser;
     } catch {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Token is invalid');
     }
+
     return true;
   }
 

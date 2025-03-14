@@ -7,12 +7,10 @@ import { JwtModule } from '@nestjs/jwt';
 import configEnv, { validate } from './config';
 import { MainServiceController } from './main-service.controller';
 import { MainServicesService } from './main-service.service';
-import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { AuthGuard } from './modules/auth/auth.guard';
-import { InteractionModule } from './modules/interactions/interaction.module';
-import { ArticlesModule } from './modules/articles/articles.module';
-import { CommentsModule } from './modules/comments/comments.module';
+import { UsersModule } from './modules/users/user.module';
+import { AuthGuard } from './modules/guards/auth.guard';
+import { ProfileModule } from './modules/profile/profile.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,10 +30,7 @@ import { CommentsModule } from './modules/comments/comments.module';
       signOptions: { expiresIn: '1d' },
     }),
     UsersModule,
-    AuthModule,
-    InteractionModule,
-    ArticlesModule,
-    CommentsModule,
+    ProfileModule,
   ],
   controllers: [MainServiceController],
   providers: [

@@ -9,12 +9,11 @@ import { User } from '@prisma/client';
 import config from '../../config';
 import { comparePassword, hashPassword } from '../../utils/bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
-import { FollowUserDto } from './dto/follow-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(
     private readonly db: DatabaseServices,
     private readonly jwtService: JwtService,
@@ -33,22 +32,29 @@ export class UsersService {
   async findByUsername(username: string) {
     return this.db.user.findUnique({
       where: { username },
+      include: {
+        following: true,
+      },
     });
   }
 
-  async findById(id: string) {
-    return this.db.user.findUnique({
-      where: { id },
+  async findOrFailByUsername(username: string) {
+    const user = await this.db.user.findUnique({
+      where: { username },
+      include: {
+        following: true,
+      },
     });
-  }
-
-  async findUserByUserIdOrThrow(userId: string) {
-    const user = await this.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
     return user;
+  }
+
+  async findById(id: number) {
+    return this.db.user.findUnique({
+      where: { id },
+    });
   }
 
   async createUser(data: CreateUserDto) {
@@ -72,22 +78,72 @@ export class UsersService {
     });
   }
 
-  async updateUser({ userId, body }: { userId: string; body: UpdateUserDto }) {
-    const { password, ...userData } = body;
+  async updateUserById({
+    userId,
+    data,
+  }: {
+    userId: number;
+    data: UpdateUserDto;
+  }) {
+    const { password, ...userData } = data;
 
-    const existingUser = await this.findUserByUserIdOrThrow(userId);
+    const [user, existingUser] = await Promise.all([
+      this.findById(userId),
+      this.findByUsername(userData.username),
+    ]);
 
-    const hashedPassword = await hashPassword(password);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (existingUser) {
+      throw new BadRequestException('username already exists');
+    }
+
+    const updatedData: Partial<User> = {
+      ...userData,
+    };
+
+    if (password) {
+      updatedData.password = await hashPassword(password);
+    }
 
     return this.db.user.update({
       where: { id: userId },
+      data: updatedData,
+    });
+  }
+
+  async followUserByUserId({
+    currentUserId,
+    followingUserId,
+  }: {
+    currentUserId: number;
+    followingUserId: number;
+  }) {
+    return await this.db.user.update({
+      where: { id: currentUserId },
       data: {
-        ...existingUser,
-        email: userData.email,
-        password: hashedPassword,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        profileUrl: userData.profileUrl,
+        following: {
+          connect: { id: followingUserId },
+        },
+      },
+    });
+  }
+
+  async unfollowUserByUserId({
+    currentUserId,
+    unFollowingUserId,
+  }: {
+    currentUserId: number;
+    unFollowingUserId: number;
+  }) {
+    return await this.db.user.update({
+      where: { id: currentUserId },
+      data: {
+        following: {
+          disconnect: { id: unFollowingUserId },
+        },
       },
     });
   }
@@ -104,35 +160,6 @@ export class UsersService {
     }
 
     return user;
-  }
-
-  async followUser({ userId, body }: { userId: string; body: FollowUserDto }) {
-    const { userId: followingId } = body;
-
-    await this.db.follow.create({
-      data: {
-        followerId: userId,
-        followingId,
-      },
-    });
-
-    return 'User followed successfully';
-  }
-
-  async unfollowUser({
-    userId,
-    body,
-  }: {
-    userId: string;
-    body: FollowUserDto;
-  }) {
-    const { userId: followingId } = body;
-
-    await this.db.follow.delete({
-      where: { followerId_followingId: { followerId: userId, followingId } },
-    });
-
-    return 'User unfollowed successfully';
   }
 
   async generateJwt(user: User) {
