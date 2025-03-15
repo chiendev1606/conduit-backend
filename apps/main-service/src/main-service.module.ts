@@ -1,15 +1,15 @@
 import { DatabaseModule } from '@conduit/database';
-import { TransformInterceptor } from '@conduit/interceptors';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import configEnv, { validate } from './config';
 import { MainServiceController } from './main-service.controller';
 import { MainServicesService } from './main-service.service';
-import { UsersModule } from './modules/users/user.module';
+import { ArticlesModule } from './modules/articles/articles.module';
 import { AuthGuard } from './modules/guards/auth.guard';
 import { ProfileModule } from './modules/profile/profile.module';
+import { UsersModule } from './modules/users/user.module';
 
 @Module({
   imports: [
@@ -31,6 +31,7 @@ import { ProfileModule } from './modules/profile/profile.module';
     }),
     UsersModule,
     ProfileModule,
+    ArticlesModule,
   ],
   controllers: [MainServiceController],
   providers: [
@@ -38,10 +39,6 @@ import { ProfileModule } from './modules/profile/profile.module';
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TransformInterceptor,
     },
   ],
 })

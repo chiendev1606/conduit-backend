@@ -29,14 +29,12 @@ export class ProfileService {
     username: string;
     currentUser: User;
   }) {
-    const followingUser = await this.userService.findOrFailByUsername(username);
+    const userToFollow = await this.userService.findOrFailByUsername(username);
 
-    const user = await this.userService.followUserByUserId({
+    return this.userService.followUserByUserId({
       currentUserId: currentUser.id,
-      followingUserId: followingUser.id,
+      followingUserId: userToFollow.id,
     });
-
-    return new ProfileResponseWrapperDto(user, true);
   }
 
   async unfollowUser({
@@ -48,11 +46,9 @@ export class ProfileService {
   }) {
     const followingUser = await this.userService.findOrFailByUsername(username);
 
-    const user = await this.userService.unfollowUserByUserId({
+    return this.userService.unfollowUserByUserId({
       currentUserId: currentUser.id,
       unFollowingUserId: followingUser.id,
     });
-
-    return new ProfileResponseWrapperDto(user, false);
   }
 }

@@ -19,7 +19,10 @@ export class LoginDto {
 export class RequestLoginDto {
   @ApiProperty({
     description: 'The email of the user',
-    example: 'test@test.com',
+    example: {
+      email: 'mahmood.koech287@bluewin.org',
+      password: '12345678',
+    },
   })
   @ValidateNested()
   @Type(() => LoginDto)

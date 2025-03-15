@@ -38,10 +38,12 @@ export class ProfileController {
     @Param() queryParams: ProfileQueryParamsDto,
     @Identify() user: User,
   ) {
-    return this.profileService.followUser({
+    const result = await this.profileService.followUser({
       username: queryParams.username,
       currentUser: user,
     });
+
+    return new ProfileResponseWrapperDto(result, true);
   }
 
   @Delete(':username/follow')
@@ -55,9 +57,11 @@ export class ProfileController {
     @Param() queryParams: ProfileQueryParamsDto,
     @Identify() user: User,
   ) {
-    return this.profileService.unfollowUser({
+    const result = await this.profileService.unfollowUser({
       username: queryParams.username,
       currentUser: user,
     });
+
+    return new ProfileResponseWrapperDto(result, false);
   }
 }

@@ -1,4 +1,4 @@
-import { ApiOperationDecorator } from '@conduit/decorators';
+import { ApiOperationDecorator, Public } from '@conduit/decorators';
 import { Identify } from '@conduit/decorators/identify.decorator';
 import {
   Body,
@@ -20,7 +20,7 @@ import { UserService } from './user.service';
 @Controller()
 @ApiTags('users')
 export class UserController {
-  private readonly logger: Logger;
+  private readonly logger: Logger = new Logger(UserController.name);
   constructor(private readonly userService: UserService) {}
 
   @Get('/user')
@@ -76,6 +76,7 @@ export class UserController {
   }
 
   @Post('/users/login')
+  @Public()
   @ApiOperationDecorator({
     summary: 'Login user',
     description: 'Login user',

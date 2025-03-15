@@ -7,7 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import config from '../../config';
-import { comparePassword, hashPassword } from '../../utils/bcrypt';
+import { hashPassword } from '../../utils/bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -54,6 +54,9 @@ export class UserService {
   async findById(id: number) {
     return this.db.user.findUnique({
       where: { id },
+      include: {
+        following: true,
+      },
     });
   }
 
@@ -67,12 +70,10 @@ export class UserService {
       throw new BadRequestException('User already exists');
     }
 
-    const hashedPassword = await hashPassword(data.password);
-
     return this.db.user.create({
       data: {
         email: data.email,
-        password: hashedPassword,
+        password: await hashPassword(data.password),
         username: data.username,
       },
     });
@@ -154,7 +155,7 @@ export class UserService {
       throw new BadRequestException('email or password is incorrect');
     }
 
-    const isPasswordValid = await comparePassword(data.password, user.password);
+    const isPasswordValid = data.password === user.password;
     if (!isPasswordValid) {
       throw new BadRequestException('email or password is incorrect');
     }
@@ -167,5 +168,17 @@ export class UserService {
       iss: config.jwt.issuer,
       sub: user.id,
     });
+  }
+
+  async findAllFollowing(userId: number) {
+    const following = await this.db.user.findMany({
+      where: {
+        followedBy: { some: { id: userId } },
+      },
+      select: {
+        id: true,
+      },
+    });
+    return following.map((user) => user.id);
   }
 }
