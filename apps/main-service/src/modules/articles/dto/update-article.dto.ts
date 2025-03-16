@@ -30,17 +30,13 @@ export class UpdateArticleDto {
 }
 
 export class RequestUpdateArticleDto {
+  @ApiProperty({
+    description: 'The article to update',
+    type: UpdateArticleDto,
+  })
   @ValidateNested()
   @Type(() => UpdateArticleDto)
   article: UpdateArticleDto;
-}
-
-export class UpdateArticleResponseDto {
-  @ApiProperty({
-    description: 'The article',
-    type: ArticleResponseDto,
-  })
-  article: ArticleResponseDto;
 }
 
 export class UpdateArticleResponseWrapperDto {

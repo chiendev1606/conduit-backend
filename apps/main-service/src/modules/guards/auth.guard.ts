@@ -1,3 +1,4 @@
+import { IS_PUBLIC_KEY } from '@conduit/decorators';
 import {
   CanActivate,
   ExecutionContext,
@@ -7,9 +8,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { UserService } from '../users/user.service';
 import config from '../../config';
-import { IS_PUBLIC_KEY } from '@conduit/decorators';
+import { UserService } from '../users/user.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -24,25 +24,25 @@ export class AuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) {
-      return true;
-    }
 
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-    if (!token) {
+
+    if (!token && !isPublic) {
       throw new UnauthorizedException('Token is required');
     }
-    try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: config.jwt.secret,
-      });
 
-      const foundUser = await this.userService.findById(payload.sub);
+    if (token) {
+      try {
+        const payload = await this.jwtService.verifyAsync(token, {
+          secret: config.jwt.secret,
+        });
 
-      request['user'] = foundUser;
-    } catch {
-      throw new UnauthorizedException('Token is invalid');
+        const foundUser = await this.userService.findById(payload.sub);
+        request['user'] = foundUser;
+      } catch {
+        throw new UnauthorizedException('Token is invalid');
+      }
     }
 
     return true;

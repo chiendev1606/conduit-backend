@@ -91,10 +91,11 @@ export class ArticlesController {
     summary: 'Get article by slug',
     description: 'Get article by slug',
     operationId: 'getArticleBySlug',
+    type: FindArticleBySlugResponseDtoWrapper,
   })
   async getArticleBySlug(
-    @Param('slug') slug: string,
     @Identify('id') userId: number,
+    @Param('slug') slug: string,
   ) {
     const article = await this.articlesService.getArticleBySlug(slug);
     const isFollowing = article.author.followedBy.some(
@@ -122,6 +123,7 @@ export class ArticlesController {
     summary: 'Update article',
     description: 'Update article',
     operationId: 'updateArticle',
+    type: RequestUpdateArticleDto,
   })
   @ApiBearerAuth()
   async updateArticle(
@@ -154,6 +156,7 @@ export class ArticlesController {
     summary: 'Delete article',
     description: 'Delete article',
     operationId: 'deleteArticle',
+    type: ArticlesResponseWrapperDto,
   })
   @ApiBearerAuth()
   async deleteArticle(
@@ -168,6 +171,7 @@ export class ArticlesController {
     summary: 'Get feeds',
     description: 'Get feeds',
     operationId: 'getFeeds',
+    type: ArticlesResponseWrapperDto,
   })
   @ApiBearerAuth()
   async getFeeds(@Identify('id') userId: number, @Query() query: GetFeedsDto) {
@@ -196,6 +200,7 @@ export class ArticlesController {
     summary: 'Favorite article',
     description: 'Favorite article',
     operationId: 'favoriteArticle',
+    type: FavoriteArticleResponseWrapperDto,
   })
   @ApiBearerAuth()
   async favoriteArticle(
@@ -216,6 +221,7 @@ export class ArticlesController {
     summary: 'Unfavorite article',
     description: 'Unfavorite article',
     operationId: 'unfavoriteArticle',
+    type: FavoriteArticleResponseWrapperDto,
   })
   @ApiBearerAuth()
   async unfavoriteArticle(
@@ -236,6 +242,7 @@ export class ArticlesController {
     summary: 'Create comment',
     description: 'Create comment',
     operationId: 'createComment',
+    type: CreateCommentResponseWrapperDto,
   })
   @ApiBearerAuth()
   async createComment(
@@ -262,6 +269,7 @@ export class ArticlesController {
     summary: 'Get comments',
     description: 'Get comments',
     operationId: 'getComments',
+    type: GetCommentsResponseDto,
   })
   async getComments(@Param('slug') slug: string) {
     const comments = await this.articlesService.getComments(slug);

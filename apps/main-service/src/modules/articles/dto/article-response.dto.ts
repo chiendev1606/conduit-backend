@@ -108,7 +108,7 @@ export class ArticlesResponseDto {
 export class ArticlesResponseWrapperDto {
   @ApiProperty({
     description: 'Article response',
-    type: ArticleResponseDto,
+    type: [ArticleResponseDto],
   })
   articles: ArticleResponseDto[];
 

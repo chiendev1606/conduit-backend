@@ -133,6 +133,7 @@ export class ArticlesService {
   }
 
   async getArticleBySlug(slug: string) {
+    await this.findOrFailArticleBySlug(slug);
     const article = await this.databaseService.article.findUnique({
       where: { slug },
       include: {
