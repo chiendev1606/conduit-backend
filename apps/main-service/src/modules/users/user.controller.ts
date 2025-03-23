@@ -56,6 +56,7 @@ export class UserController {
   }
 
   @Post('/users')
+  @Public()
   @ApiOperationDecorator({
     summary: 'Create user',
     description: 'Create user',

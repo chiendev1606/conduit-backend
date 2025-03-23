@@ -43,7 +43,7 @@ export class UserResponseWrapperDto {
     description: 'User response',
     type: UserResponseDto,
   })
-  user: UserResponseDto;
+  user: UserResponseDto & { id: number };
 
   constructor(props: User, token: string) {
     this.user = {
@@ -52,6 +52,7 @@ export class UserResponseWrapperDto {
       username: props.username,
       bio: props.bio,
       image: props.image,
+      id: props.id,
     };
   }
 }

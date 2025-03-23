@@ -4,14 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Article, Prisma } from '@prisma/client';
+import { Article, Comment, Prisma } from '@prisma/client';
 import slugify from 'slugify';
+import { UserService } from '../users/user.service';
+import { CreateCommentDto } from './dto/comments.dto';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { FindArticlesQueryDto } from './dto/find-articles-query.dto';
 import { GetFeedsDto } from './dto/get-feeds.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { UserService } from '../users/user.service';
-import { CreateCommentDto } from './dto/comments.dto';
 
 @Injectable()
 export class ArticlesService {
@@ -30,7 +30,7 @@ export class ArticlesService {
     return article;
   }
 
-  checkOwnership(article: Article, userId: number) {
+  checkOwnershipForArticle(article: Article, userId: number) {
     if (article.authorId !== userId) {
       throw new ForbiddenException(
         'You are not allowed to update this article',
@@ -38,7 +38,27 @@ export class ArticlesService {
     }
   }
 
-  async findArticles(query: FindArticlesQueryDto) {
+  checkOwnershipForComment({
+    comment,
+    userId,
+    articleAuthorId,
+  }: {
+    comment: Comment;
+    userId: number;
+    articleAuthorId?: number;
+  }) {
+    if (
+      comment.authorId !== userId &&
+      articleAuthorId &&
+      articleAuthorId !== userId
+    ) {
+      throw new ForbiddenException(
+        'You are not allowed to delete this comment',
+      );
+    }
+  }
+
+  async findArticles(query: FindArticlesQueryDto, userId: number) {
     const { tag, author, favorited, offset, limit } = query;
 
     const AND: Prisma.ArticleWhereInput[] = [];
@@ -53,7 +73,7 @@ export class ArticlesService {
     if (author) {
       AND.push({
         author: {
-          username: author,
+          id: Number(author),
         },
       });
     }
@@ -61,7 +81,7 @@ export class ArticlesService {
     if (favorited) {
       AND.push({
         favoritedBy: {
-          some: { id: favorited },
+          some: { id: userId },
         },
       });
     }
@@ -86,6 +106,9 @@ export class ArticlesService {
           },
           author: true,
           favoritedBy: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
         },
       }),
     ]);
@@ -160,7 +183,7 @@ export class ArticlesService {
 
   async updateArticle(slug: string, body: UpdateArticleDto, userId: number) {
     const article = await this.findOrFailArticleBySlug(slug);
-    this.checkOwnership(article, userId);
+    this.checkOwnershipForArticle(article, userId);
     const updatedArticle = await this.databaseService.article.update({
       where: { slug },
       data: {
@@ -187,7 +210,7 @@ export class ArticlesService {
 
   async deleteArticle(slug: string, userId: number) {
     const article = await this.findOrFailArticleBySlug(slug);
-    this.checkOwnership(article, userId);
+    this.checkOwnershipForArticle(article, userId);
     await this.databaseService.article.delete({ where: { slug } });
   }
 
@@ -317,13 +340,77 @@ export class ArticlesService {
           },
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
     return comments;
   }
 
   async deleteComment(slug: string, id: number, userId: number) {
     const article = await this.findOrFailArticleBySlug(slug);
-    this.checkOwnership(article, userId);
+    const comment = await this.databaseService.comment.findUnique({
+      where: { id },
+    });
+    this.checkOwnershipForComment({
+      comment,
+      userId,
+      articleAuthorId: article.authorId,
+    });
     return this.databaseService.comment.delete({ where: { id } });
+  }
+
+  async updateComment(
+    slug: string,
+    id: number,
+    data: CreateCommentDto,
+    userId: number,
+  ) {
+    const comment = await this.databaseService.comment.findUnique({
+      where: { id },
+    });
+    this.checkOwnershipForComment({
+      comment,
+      userId,
+    });
+    return this.databaseService.comment.update({
+      where: { id },
+      data: { body: data.body },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            image: true,
+            bio: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getPopularTags(limit = 10) {
+    const tags = await this.databaseService.tag.findMany({
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: { articles: true },
+        },
+      },
+      orderBy: {
+        articles: {
+          _count: 'desc',
+        },
+      },
+      take: limit,
+    });
+
+    return tags.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      count: tag._count.articles,
+    }));
   }
 }

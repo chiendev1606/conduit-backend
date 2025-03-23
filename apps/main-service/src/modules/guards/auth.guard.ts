@@ -39,9 +39,13 @@ export class AuthGuard implements CanActivate {
         });
 
         const foundUser = await this.userService.findById(payload.sub);
+        console.log(foundUser);
+
         request['user'] = foundUser;
       } catch {
-        throw new UnauthorizedException('Token is invalid');
+        if (!isPublic) {
+          throw new UnauthorizedException('Token is invalid');
+        }
       }
     }
 

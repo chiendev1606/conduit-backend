@@ -30,6 +30,7 @@ import {
   RequestUpdateArticleDto,
   UpdateArticleResponseWrapperDto,
 } from './dto/update-article.dto';
+import { GetPopularTagsResponseWrapperDto } from './dto/tag-response.dto';
 
 @Controller('articles')
 @ApiTags('articles')
@@ -48,8 +49,10 @@ export class ArticlesController {
     @Query() query: FindArticlesQueryDto,
     @Identify('id') userId: number,
   ) {
-    const { articleCount, articles } =
-      await this.articlesService.findArticles(query);
+    const { articleCount, articles } = await this.articlesService.findArticles(
+      query,
+      userId,
+    );
     return new ArticlesResponseWrapperDto(
       articles.map((article) => ({
         ...article,
@@ -57,6 +60,35 @@ export class ArticlesController {
         favoritesCount: article.favoritedBy.length,
         tagList: article.tagList.map((tag) => tag.name),
       })),
+      articleCount,
+    );
+  }
+
+  @Get('feeds')
+  @ApiOperationDecorator({
+    summary: 'Get feeds',
+    description: 'Get feeds',
+    operationId: 'getFeeds',
+    type: ArticlesResponseWrapperDto,
+  })
+  @ApiBearerAuth()
+  async getFeeds(@Identify('id') userId: number, @Query() query: GetFeedsDto) {
+    const { articleCount, articles } = await this.articlesService.getFeeds(
+      userId,
+      query,
+    );
+    return new ArticlesResponseWrapperDto(
+      articles.map((article) => ({
+        ...article,
+        tagList: article.tagList.map((tag) => tag.name),
+        author: {
+          ...article.author,
+          following: true,
+        },
+        favorited: article.favoritedBy.some((user) => user.id === userId),
+        favoritesCount: article.favoritedBy.length,
+      })),
+
       articleCount,
     );
   }
@@ -83,6 +115,19 @@ export class ArticlesController {
       article.tagList.map((tag) => tag.name),
       article.author as any,
     );
+  }
+
+  @Get('tags')
+  @Public()
+  @ApiOperationDecorator({
+    summary: 'Get popular tags',
+    description: 'Get popular tags',
+    operationId: 'getPopularTags',
+    type: GetPopularTagsResponseWrapperDto,
+  })
+  async getPopularTags() {
+    const tags = await this.articlesService.getPopularTags();
+    return new GetPopularTagsResponseWrapperDto(tags);
   }
 
   @Get(':slug')
@@ -164,35 +209,6 @@ export class ArticlesController {
     @Identify('id') userId: number,
   ) {
     await this.articlesService.deleteArticle(slug, userId);
-  }
-
-  @Get('feeds')
-  @ApiOperationDecorator({
-    summary: 'Get feeds',
-    description: 'Get feeds',
-    operationId: 'getFeeds',
-    type: ArticlesResponseWrapperDto,
-  })
-  @ApiBearerAuth()
-  async getFeeds(@Identify('id') userId: number, @Query() query: GetFeedsDto) {
-    const { articleCount, articles } = await this.articlesService.getFeeds(
-      userId,
-      query,
-    );
-    return new ArticlesResponseWrapperDto(
-      articles.map((article) => ({
-        ...article,
-        tagList: article.tagList.map((tag) => tag.name),
-        author: {
-          ...article.author,
-          following: true,
-        },
-        favorited: article.favoritedBy.some((user) => user.id === userId),
-        favoritesCount: article.favoritedBy.length,
-      })),
-
-      articleCount,
-    );
   }
 
   @Post(':slug/favorite')
@@ -297,5 +313,34 @@ export class ArticlesController {
     @Identify('id') userId: number,
   ) {
     await this.articlesService.deleteComment(slug, id, userId);
+  }
+
+  @Put(':slug/comments/:id')
+  @ApiOperationDecorator({
+    summary: 'Update comment',
+    description: 'Update comment',
+    operationId: 'updateComment',
+    type: CreateCommentResponseWrapperDto,
+  })
+  @ApiBearerAuth()
+  async updateComment(
+    @Param('slug') slug: string,
+    @Param('id') id: number,
+    @Body() data: CreateCommentRequestDto,
+    @Identify('id') userId: number,
+  ) {
+    const comment = await this.articlesService.updateComment(
+      slug,
+      id,
+      data.comment,
+      userId,
+    );
+    return new CreateCommentResponseWrapperDto({
+      id: comment.id,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+      body: comment.body,
+      author: comment.author,
+    });
   }
 }
