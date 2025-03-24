@@ -73,7 +73,7 @@ export class UserService {
     return this.db.user.create({
       data: {
         email: data.email,
-        password: await hashPassword(data.password),
+        password: data.password,
         username: data.username,
       },
     });
@@ -151,6 +151,7 @@ export class UserService {
 
   async login(data: LoginDto) {
     const user = await this.findByEmail(data.email);
+    console.log(user);
     if (!user) {
       throw new BadRequestException('email or password is incorrect');
     }

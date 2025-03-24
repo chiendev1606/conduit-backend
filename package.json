@@ -6,9 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "dotenv -e apps/main-service/.env -- nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
-    "start": "nest start",
+    "start": "dotenv -e apps/main-service/.env nest start",
     "start:dev": "dotenv -e apps/main-service/.env -- nest start --watch",
     "db:push": "dotenv -e apps/main-service/.env -- npx prisma db push --schema ./apps/main-service/prisma/schema.prisma",
     "db:generate": "dotenv -e apps/main-service/.env -- npx prisma generate --schema ./apps/main-service/prisma/schema.prisma",

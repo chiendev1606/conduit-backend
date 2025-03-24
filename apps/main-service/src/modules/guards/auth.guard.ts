@@ -39,8 +39,6 @@ export class AuthGuard implements CanActivate {
         });
 
         const foundUser = await this.userService.findById(payload.sub);
-        console.log(foundUser);
-
         request['user'] = foundUser;
       } catch {
         if (!isPublic) {

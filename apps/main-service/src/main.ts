@@ -1,9 +1,8 @@
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { MainServiceModule } from './main-service.module';
-import configEnv from './config';
-import { ValidationPipe, BadRequestException } from '@nestjs/common';
-import { ValidationError } from 'class-validator';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationError } from 'class-validator';
+import { MainServiceModule } from './main-service.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(MainServiceModule);
@@ -37,6 +36,5 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, documentFactory);
 
   await app.listen(process.env.port ?? 9000);
-  console.log(configEnv);
 }
 bootstrap();
