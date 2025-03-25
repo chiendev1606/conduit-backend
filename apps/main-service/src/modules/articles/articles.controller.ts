@@ -281,6 +281,7 @@ export class ArticlesController {
   }
 
   @Get(':slug/comments')
+  @Public()
   @ApiOperationDecorator({
     summary: 'Get comments',
     description: 'Get comments',
