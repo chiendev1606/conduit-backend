@@ -7,6 +7,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "build:main": "nest build --project main-service",
+    "start:main": "nest start --project main-service",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "dotenv -e apps/main-service/.env nest start",
     "start:dev": "dotenv -e apps/main-service/.env -- nest start --watch",
