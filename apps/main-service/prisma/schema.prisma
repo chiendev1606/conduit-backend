@@ -5,12 +5,14 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto, pg_trgm]
 }
 
 model Article {
@@ -18,31 +20,47 @@ model Article {
   slug        String    @unique
   title       String
   description String
-  body        String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now())
+  body        String    @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   tagList     Tag[]
   author      User      @relation("UserArticles", fields: [authorId], onDelete: Cascade, references: [id])
-  authorId    Int
+  authorId    Int       @map("author_id")
   favoritedBy User[]    @relation("UserFavorites")
   comments    Comment[]
+
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+  @@index([slug])
+  @@index([title])
+  @@index([authorId, createdAt(sort: Desc)])
+  @@map("articles")
 }
 
 model Comment {
   id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
   body      String
   article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  articleId Int
+  articleId Int      @map("article_id")
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  Int
+  authorId  Int      @map("author_id")
+
+  @@index([articleId])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+  @@index([articleId, createdAt(sort: Desc)])
+  @@map("comments")
 }
 
 model Tag {
   id       Int       @id @default(autoincrement())
   name     String    @unique
   articles Article[]
+
+  @@index([name])
+  @@map("tags")
 }
 
 model User {
@@ -51,11 +69,18 @@ model User {
   username   String    @unique
   password   String
   image      String?   @default("https://avatar.iran.liara.run/public/38")
-  bio        String?
+  bio        String?   @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
   articles   Article[] @relation("UserArticles")
   favorites  Article[] @relation("UserFavorites")
   followedBy User[]    @relation("UserFollows")
   following  User[]    @relation("UserFollows")
   comments   Comment[]
   demo       Boolean   @default(false)
+
+  @@index([email])
+  @@index([username])
+  @@index([createdAt])
+  @@map("users")
 }
